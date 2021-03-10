@@ -13,10 +13,10 @@ public class HCNetSDKUtils {
 
   private static HCNetSDK hCNetSDK = HCNetSDK.INSTANCE;
 
-  String host = "172.4.1.170";
+  String host = "192.168.0.177";
   String port = "8000";
   String username = "admin";
-  String password = "123456";
+  String password = "hik12345+";
 
   public void init(){
     boolean initResult = hCNetSDK.NET_DVR_Init();
