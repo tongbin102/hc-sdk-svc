@@ -44,4 +44,15 @@ public class HCNetSDKUtils {
       return;
     }
   }
+
+  public void searchFile(NativeLong userId, NativeLong channel){
+    HCNetSDK.NET_DVR_FILECOND dvrFileCond = new HCNetSDK.NET_DVR_FILECOND();
+
+    // 查找录像文件
+    NativeLong searchResult = hCNetSDK.NET_DVR_FindFile_V30(userId, dvrFileCond);
+
+    if(searchResult.longValue() < 0){
+      log.error("Search file error: {}", hCNetSDK.NET_DVR_GetLastError());
+    }
+  }
 }
