@@ -18,7 +18,7 @@ import com.sun.jna.win32.StdCallLibrary;
  **/
 public interface HCNetSDK extends StdCallLibrary {
 
-  HCNetSDK INSTANCE = (HCNetSDK) Native.loadLibrary("D:\\IdeaProjects\\hc-sdk-svc\\libs\\HCNetSDK.dll", HCNetSDK.class);
+  HCNetSDK INSTANCE = (HCNetSDK) Native.loadLibrary("C:\\IdeaProjects\\hc-sdk-svc\\libs\\HCNetSDK.dll", HCNetSDK.class);
   // HCNetSDK INSTANCE = (HCNetSDK) Native.loadLibrary(HCNetSDKPath.DLL_PATH + "HCNetSDK.dll", HCNetSDK.class);
 
   // HCNetSDK INSTANCE = (HCNetSDK) Native.loadLibrary("HCNetSDK", HCNetSDK.class);
