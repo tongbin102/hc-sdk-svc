@@ -1,0 +1,5 @@
+# 配置端口
+server:
+  port: 8080
+  servlet:
+    context-path: /hc-sdk-svc

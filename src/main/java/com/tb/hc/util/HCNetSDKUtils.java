@@ -18,9 +18,9 @@ public class HCNetSDKUtils {
   String username = "admin";
   String password = "hik12345+";
 
-  public void init(){
+  public void init() {
     boolean initResult = hCNetSDK.NET_DVR_Init();
-    if(!initResult){
+    if (!initResult) {
       log.error("初始化失败！");
     }
 
@@ -29,29 +29,24 @@ public class HCNetSDKUtils {
   public static void main(String[] args) {
     HCNetSDKUtils sdkUtils = new HCNetSDKUtils();
     sdkUtils.init();
-    hCNetSDK.NET_DVR_SetConnectTime(2000,1);
-    hCNetSDK.NET_DVR_SetReconnect(10000,true);
+    hCNetSDK.NET_DVR_SetConnectTime(2000, 1);
+    hCNetSDK.NET_DVR_SetReconnect(10000, true);
 
     sdkUtils.login();
   }
 
-  public void login(){
-    HCNetSDK.NET_DVR_DEVICEINFO_V30 dvrDeviceinfo =  new HCNetSDK.NET_DVR_DEVICEINFO_V30();
-    NativeLong userId = hCNetSDK.NET_DVR_Login_V30(host,Short.parseShort(port),username, password, dvrDeviceinfo);
-    if (userId.longValue() == -1) {
-      log.error("注册失败！", hCNetSDK.NET_DVR_GetLastError());
-      hCNetSDK.NET_DVR_Cleanup();
-      return;
-    }
+  public NativeLong login() {
+    HCNetSDK.NET_DVR_DEVICEINFO_V30 dvrDeviceinfo = new HCNetSDK.NET_DVR_DEVICEINFO_V30();
+    return hCNetSDK.NET_DVR_Login_V30(host, Short.parseShort(port), username, password, dvrDeviceinfo);
   }
 
-  public void searchFile(NativeLong userId, NativeLong channel){
+  public void searchFile(NativeLong userId, NativeLong channel) {
     HCNetSDK.NET_DVR_FILECOND dvrFileCond = new HCNetSDK.NET_DVR_FILECOND();
 
     // 查找录像文件
     NativeLong searchResult = hCNetSDK.NET_DVR_FindFile_V30(userId, dvrFileCond);
 
-    if(searchResult.longValue() < 0){
+    if (searchResult.longValue() < 0) {
       log.error("Search file error: {}", hCNetSDK.NET_DVR_GetLastError());
     }
   }
