@@ -301,6 +301,7 @@ public interface HCNetSDK extends StdCallLibrary {
   public static final int NET_DVR_THROWBFRAME = 20;//丢B帧
   public static final int NET_DVR_SETSPEED = 24;//设置码流速度
   public static final int NET_DVR_KEEPALIVE = 25;//保持与设备的心跳(如果回调阻塞，建议2秒发送一次)
+  public static final int NET_DVR_SET_TRANS_TYPE = 32;
   //远程按键定义如下：
   /* key value send to CONFIG program */
   public static final int KEY_CODE_1 = 1;
