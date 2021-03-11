@@ -38,4 +38,7 @@ public class DeviceStateApi {
     }
     return dvrWorkState;
   }
+
+
+
 }
