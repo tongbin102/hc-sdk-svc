@@ -7,6 +7,10 @@ import com.tb.hc.sdk.HCNetSDK;
 import com.tb.hc.task.DownloadFileTask;
 import lombok.extern.slf4j.Slf4j;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Timer;
 
 /**
@@ -50,7 +54,22 @@ public class HCNetSDKUtils {
         return hCNetSDK.NET_DVR_Login_V30(host, Short.parseShort(port), username, password, dvrDeviceinfo);
     }
 
-    public void searchAndDownloadFile(NativeLong lUserId, NativeLong lChannel) {
+    public void searchAndDownloadFile(NativeLong lUserId, NativeLong lChannel, String startTime, String stopTime) {
+
+        String pattern = "yyyy-MM-dd hh:mm:ss";
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        Calendar cStartTime = Calendar.getInstance();
+        Calendar cStopTime = Calendar.getInstance();
+
+        try {
+            Date dStartTime = sdf.parse(startTime);
+            cStartTime.setTime(dStartTime);
+            Date dStopTime = sdf.parse(stopTime);
+            cStopTime.setTime(dStopTime);
+        } catch (ParseException e) {
+            log.warn("日期格式错误！");
+        }
+
         HCNetSDK.NET_DVR_FILECOND dvrFileCond = new HCNetSDK.NET_DVR_FILECOND();
 
         dvrFileCond.dwFileType = 0xFF;
@@ -61,18 +80,18 @@ public class HCNetSDKUtils {
         dvrFileCond.dwUseCardNo = 0;
         dvrFileCond.struStartTime = new HCNetSDK.NET_DVR_TIME();
         dvrFileCond.struStopTime = new HCNetSDK.NET_DVR_TIME();
-        dvrFileCond.struStartTime.dwYear = 2021;
-        dvrFileCond.struStartTime.dwMonth = 3;
-        dvrFileCond.struStartTime.dwDay = 11;
-        dvrFileCond.struStartTime.dwHour = 21;
-        dvrFileCond.struStartTime.dwMinute = 30;
-        dvrFileCond.struStartTime.dwSecond = 00;
-        dvrFileCond.struStopTime.dwYear = 2021;
-        dvrFileCond.struStopTime.dwMonth = 3;
-        dvrFileCond.struStopTime.dwDay = 11;
-        dvrFileCond.struStopTime.dwHour = 21;
-        dvrFileCond.struStopTime.dwMinute = 50;
-        dvrFileCond.struStopTime.dwSecond = 00;
+        dvrFileCond.struStartTime.dwYear = cStartTime.get(Calendar.YEAR);
+        dvrFileCond.struStartTime.dwMonth = cStartTime.get(Calendar.MONTH) + 1;
+        dvrFileCond.struStartTime.dwDay = cStartTime.get(Calendar.DATE);
+        dvrFileCond.struStartTime.dwHour = cStartTime.get(Calendar.HOUR_OF_DAY);
+        dvrFileCond.struStartTime.dwMinute = cStartTime.get(Calendar.MINUTE);
+        dvrFileCond.struStartTime.dwSecond = cStartTime.get(Calendar.SECOND);
+        dvrFileCond.struStopTime.dwYear = cStopTime.get(Calendar.YEAR);
+        dvrFileCond.struStopTime.dwMonth = cStopTime.get(Calendar.MONTH) + 1;
+        dvrFileCond.struStopTime.dwDay = cStopTime.get(Calendar.DATE);
+        dvrFileCond.struStopTime.dwHour = cStopTime.get(Calendar.HOUR_OF_DAY);
+        dvrFileCond.struStopTime.dwMinute = cStopTime.get(Calendar.MINUTE);
+        dvrFileCond.struStopTime.dwSecond = cStopTime.get(Calendar.SECOND);
 
         // 查找录像文件
         NativeLong lFindFile = hCNetSDK.NET_DVR_FindFile_V30(lUserId, dvrFileCond);
