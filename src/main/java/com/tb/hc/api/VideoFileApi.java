@@ -4,11 +4,13 @@ import com.sun.jna.NativeLong;
 import com.tb.hc.sdk.HCNetSDK;
 import com.tb.hc.util.HCNetSDKUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.websocket.server.PathParam;
 import java.io.*;
 
 @Slf4j
@@ -20,19 +22,20 @@ public class VideoFileApi {
     private final String filePath = "";
 
     @GetMapping(value = "/downloadFile")
-    public void downloadVideo(@RequestParam(value = "channel") long lChannel,
+    public void downloadVideo(@RequestParam(value = "deviceIp") String deviceIp,
+                              @RequestParam(value = "channel") long lChannel,
                               @RequestParam(value = "start") String startTime,
                               @RequestParam(value = "stop") String stopTime) {
         HCNetSDKUtils sdkUtils = new HCNetSDKUtils();
 
         sdkUtils.init();
-        NativeLong lUserId = sdkUtils.login();
+        NativeLong lUserId = sdkUtils.login(deviceIp);
         if (lUserId.longValue() == -1) {
             log.error("注册失败！{}", hCNetSDK.NET_DVR_GetLastError());
             hCNetSDK.NET_DVR_Cleanup();
             return;
         }
-        sdkUtils.searchAndDownloadFile(lUserId, new NativeLong(lChannel), startTime, stopTime);
+        sdkUtils.searchAndDownloadFile(deviceIp, lUserId, new NativeLong(lChannel), startTime, stopTime);
     }
 
     @GetMapping(value = "/mp4")
@@ -41,7 +44,7 @@ public class VideoFileApi {
 //        String path = "D:\\redio1.mp4";
         BufferedInputStream bis = null;
         try {
-            File file = new File(fileName);
+            File file = new File("/opt/data/" + fileName);
             if (file.exists()) {
                 long p = 0L;
                 long toLength = 0L;

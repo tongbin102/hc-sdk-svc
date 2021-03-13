@@ -1,12 +1,12 @@
 package com.tb.hc.util;
 
 import com.sun.jna.NativeLong;
-import com.sun.jna.examples.win32.W32API;
-import com.sun.jna.ptr.NativeLongByReference;
+import com.sun.jna.Pointer;
 import com.tb.hc.sdk.HCNetSDK;
 import com.tb.hc.task.DownloadFileTask;
 import lombok.extern.slf4j.Slf4j;
 
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -22,17 +22,45 @@ public class HCNetSDKUtils {
 
     private static HCNetSDK hCNetSDK = HCNetSDK.INSTANCE;
 
-    String host = "192.168.0.177";
+    //    String host = "192.168.0.177";
+//    String host = "10.97.154.236";
     String port = "8000";
     String username = "admin";
-    String password = "hik12345";
+    String password = "Hik12345";
 
     public void init() {
         boolean initResult = hCNetSDK.NET_DVR_Init();
         if (!initResult) {
             log.error("初始化失败！ {}", hCNetSDK.NET_DVR_GetLastError());
+            return;
         }
+        setLinuxPath();
+//        initResult  = hCNetSDK.NET_DVR_SetLogToFile(3, "C:\\logs\\",false);
+        initResult = hCNetSDK.NET_DVR_SetLogToFile(3, "/opt/logs/", false);
+    }
 
+    private void setLinuxPath() {
+
+        // 设置HCNetSDKCom组件库所在路径
+        String strPathCom = "/usr/lib/";
+        HCNetSDK.NET_DVR_LOCAL_SDK_PATH struComPath = new HCNetSDK.NET_DVR_LOCAL_SDK_PATH();
+        System.arraycopy(strPathCom.getBytes(), 0, struComPath.sPath, 0, strPathCom.length());
+        struComPath.write();
+        hCNetSDK.NET_DVR_SetSDKInitCfg(2, struComPath.getPointer());
+
+        // 设置libcrypto.so所在路径
+        HCNetSDK.BYTE_ARRAY ptrByteArrayCrypto = new HCNetSDK.BYTE_ARRAY(256);
+        String strPathCrypto = "/usr/lib/libcrypto.so";
+        System.arraycopy(strPathCrypto.getBytes(), 0, ptrByteArrayCrypto.byValue, 0, strPathCrypto.length());
+        ptrByteArrayCrypto.write();
+        hCNetSDK.NET_DVR_SetSDKInitCfg(3, ptrByteArrayCrypto.getPointer());
+
+        // 设置libssl.so所在路径
+        HCNetSDK.BYTE_ARRAY ptrByteArraySsl = new HCNetSDK.BYTE_ARRAY(256);
+        String strPathSsl = "/usr/lib/libssl.so";
+        System.arraycopy(strPathSsl.getBytes(), 0, ptrByteArraySsl.byValue, 0, strPathSsl.length());
+        ptrByteArraySsl.write();
+        hCNetSDK.NET_DVR_SetSDKInitCfg(4, ptrByteArraySsl.getPointer());
     }
 
     public static void main(String[] args) {
@@ -41,7 +69,8 @@ public class HCNetSDKUtils {
         hCNetSDK.NET_DVR_SetConnectTime(2000, 1);
         hCNetSDK.NET_DVR_SetReconnect(10000, true);
 
-        NativeLong lUserId = sdkUtils.login();
+        String deviceIp = "10.97.154.236";
+        NativeLong lUserId = sdkUtils.login(deviceIp);
         if (lUserId.longValue() == -1) {
             log.error("注册失败！{}", hCNetSDK.NET_DVR_GetLastError());
             hCNetSDK.NET_DVR_Cleanup();
@@ -49,12 +78,12 @@ public class HCNetSDKUtils {
         }
     }
 
-    public NativeLong login() {
+    public NativeLong login(String deviceIp) {
         HCNetSDK.NET_DVR_DEVICEINFO_V30 dvrDeviceinfo = new HCNetSDK.NET_DVR_DEVICEINFO_V30();
-        return hCNetSDK.NET_DVR_Login_V30(host, Short.parseShort(port), username, password, dvrDeviceinfo);
+        return hCNetSDK.NET_DVR_Login_V30(deviceIp, Short.parseShort(port), username, password, dvrDeviceinfo);
     }
 
-    public void searchAndDownloadFile(NativeLong lUserId, NativeLong lChannel, String startTime, String stopTime) {
+    public void searchAndDownloadFile(String deviceIp, NativeLong lUserId, NativeLong lChannel, String startTime, String stopTime) {
 
         String pattern = "yyyy-MM-dd hh:mm:ss";
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
@@ -72,12 +101,7 @@ public class HCNetSDKUtils {
 
         HCNetSDK.NET_DVR_FILECOND dvrFileCond = new HCNetSDK.NET_DVR_FILECOND();
 
-        dvrFileCond.dwFileType = 0xFF;
-        // 通道号
-        dvrFileCond.lChannel = lChannel;
-        dvrFileCond.dwIsLocked = 0xFF;
         // 是否使用卡号
-        dvrFileCond.dwUseCardNo = 0;
         dvrFileCond.struStartTime = new HCNetSDK.NET_DVR_TIME();
         dvrFileCond.struStopTime = new HCNetSDK.NET_DVR_TIME();
         dvrFileCond.struStartTime.dwYear = cStartTime.get(Calendar.YEAR);
@@ -93,8 +117,17 @@ public class HCNetSDKUtils {
         dvrFileCond.struStopTime.dwMinute = cStopTime.get(Calendar.MINUTE);
         dvrFileCond.struStopTime.dwSecond = cStopTime.get(Calendar.SECOND);
 
+        // 通道号
+//        dvrFileCond.lChannel = lChannel;
+        dvrFileCond.lChannel = new NativeLong(21l);
+        dvrFileCond.dwUseCardNo = 0;
+        dvrFileCond.dwFileType = 0xff;
+        dvrFileCond.dwIsLocked = 0xff;
         // 查找录像文件
-        NativeLong lFindFile = hCNetSDK.NET_DVR_FindFile_V30(lUserId, dvrFileCond);
+        NativeLong lFindFile = hCNetSDK.NET_DVR_FindFile(lUserId, lChannel, 0xff, dvrFileCond.struStartTime, dvrFileCond.struStopTime);
+
+        log.info("Findfile: {}", lFindFile);
+        log.info("NET_DVR_GetLastError: {}", hCNetSDK.NET_DVR_GetLastError());
 
         if (lFindFile.longValue() < 0) {
             log.error("Search file error: {}", hCNetSDK.NET_DVR_GetLastError());
@@ -106,6 +139,7 @@ public class HCNetSDKUtils {
         while (true) {
             // 逐个获取查找到的文件信息
             lNext = hCNetSDK.NET_DVR_FindNextFile_V30(lFindFile, dvrFileData);
+            log.info("lNext: {}", lNext);
             if (lNext.longValue() == HCNetSDK.NET_DVR_FILE_SUCCESS) {
                 // 搜索成功
                 log.info("搜索成功！");
@@ -115,12 +149,9 @@ public class HCNetSDKUtils {
 
                 String fileName = new String(s[0]);
                 log.info("文件名：{}", fileName);
-//                NativeLong lPlayBack = hCNetSDK.NET_DVR_PlayBackByName(lUserId, fileName, new W32API.HWND());
 
-//                hCNetSDK.NET_DVR_PlayBackSaveData(lPlayBack, fileName);
-
-
-                downloadFile(lUserId, fileName, fileName);
+                String destFileName = deviceIp + "ch" + lChannel.longValue() + startTime.replaceAll(" ", "").replaceAll("-", "").replaceAll(":", "") + stopTime.replaceAll(" ", "").replaceAll("-", "").replaceAll(":", "");
+                downloadFile(lUserId, fileName, destFileName);
             } else if (lNext.longValue() == HCNetSDK.NET_DVR_ISFINDING) {
                 log.info("搜索中……");
                 continue;
@@ -140,7 +171,7 @@ public class HCNetSDKUtils {
 
     public void downloadFile(NativeLong lUserId, String sourceFileName, String destFileName) {
         // 按文件名下载录像
-        destFileName = destFileName + ".mp4";
+        destFileName = "/opt/data/" + destFileName + ".mp4";
         NativeLong lDownloadFile = hCNetSDK.NET_DVR_GetFileByName(lUserId, sourceFileName, destFileName);
         if (lDownloadFile.longValue() < 0) {
             log.error("下载文件失败！{}", hCNetSDK.NET_DVR_GetLastError());

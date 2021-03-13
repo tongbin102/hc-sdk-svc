@@ -6,6 +6,7 @@ import com.tb.hc.util.HCNetSDKUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -19,11 +20,11 @@ public class DeviceStateApi {
   static HCNetSDK hCNetSDK = HCNetSDK.INSTANCE;
 
   @GetMapping(value = "fetchDeviceState")
-  public HCNetSDK.NET_DVR_WORKSTATE_V30 fetchDeviceState() {
+  public HCNetSDK.NET_DVR_WORKSTATE_V30 fetchDeviceState(@RequestParam(value = "deviceIp")String deviceIp) {
     HCNetSDKUtils sdkUtils = new HCNetSDKUtils();
 
     sdkUtils.init();
-    NativeLong lUserId = sdkUtils.login();
+    NativeLong lUserId = sdkUtils.login(deviceIp);
     if (lUserId.longValue() == -1) {
       log.error("注册失败！{}", hCNetSDK.NET_DVR_GetLastError());
       hCNetSDK.NET_DVR_Cleanup();
